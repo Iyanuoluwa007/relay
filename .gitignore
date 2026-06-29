@@ -1,0 +1,13 @@
+_workbench/
+__pycache__/
+*.pyc
+results/*.json
+results/*.txt
+
+# Never commit credentials or local secret-scanner state.
+.env
+.env.*
+.cache_ggshield
+
+# Keep the results/ directory present but empty in the repo.
+!results/.gitkeep
