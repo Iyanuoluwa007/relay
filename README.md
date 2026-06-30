@@ -185,20 +185,26 @@ scorer, with no duplicated work throughout.
 |---|---|
 | Resume-fidelity spike | **Positive** resume continues, verified mechanically and by transcript |
 | Orchestrator (thinnest vertical slice) | **Built and green** against deterministic fakes |
-| Real-CLI orchestrator run | Next milestone joining the proven loop to a live multi-cycle run |
+| Real-CLI orchestrator join (multi-cycle) | **Done** proven on the live CLI: 3 real sessions, done-count `[3,4,5]`, `duplicated=none`, confirmed by per-cycle transcripts |
 
-The thinnest vertical slice from the design is complete: detect one interruption
-type, checkpoint, wait, relaunch, resume, drive to completion, on one project,
-with the closed exit set. Everything deliberately deferred (work queue,
-parallel projects, additional event types, notifications) is *additive* and
-bolts onto this loop without changing its control flow.
+The thinnest vertical slice from the design is complete and proven on the **real
+Claude Code CLI**: the orchestrator drives a task from a `2/5` partial state to
+`5/5` across multiple injected interruptions, re-checkpointing from real
+accumulated git state and resuming a fresh real session each cycle, with no
+duplicated work. The slice detect one interruption type, checkpoint, wait,
+relaunch, resume, drive to completion, on one project, with the closed exit set
+is done end-to-end. Everything deliberately deferred (work queue, parallel
+projects, additional event types, notifications) is *additive* and bolts onto
+this loop without changing its control flow.
 
 ---
 
 ## Roadmap
 
-- **Real-CLI orchestrator run** live session-limit detection, real reset-time
-  parsing, multi-cycle git state against the actual CLI.
+- **Live session-limit detection against real quota output** the multi-cycle
+  real-CLI join is *done* (proven with injected interruptions); the additive
+  next step is validating the detector and reset-time parsing against real
+  `claude` limit-output samples captured from an actual quota limit.
 - **Additional interruption types** context-window-full, network drop, each a
   new detector row routing through the existing recovery path.
 - **Notifications** desktop, then one webhook (paused, resumed, completed,
