@@ -186,6 +186,7 @@ scorer, with no duplicated work throughout.
 | Resume-fidelity spike | **Positive** resume continues, verified mechanically and by transcript |
 | Orchestrator (thinnest vertical slice) | **Built and green** against deterministic fakes |
 | Real-CLI orchestrator join (multi-cycle) | **Done** proven on the live CLI: 3 real sessions, done-count `[3,4,5]`, `duplicated=none`, confirmed by per-cycle transcripts |
+| Relay for VS Code | **Scaffold built** a validated API-key gate (SecretStorage, two-stage) drives the real engine from the editor; pause/resume and real-limit detection pending |
 
 The thinnest vertical slice from the design is complete and proven on the **real
 Claude Code CLI**: the orchestrator drives a task from a `2/5` partial state to
@@ -212,13 +213,21 @@ this loop without changing its control flow.
 - **Work queue** multiple projects with optional task-switching while one
   waits for reset.
 
-### Relay for VS Code coming soon
+### Relay for VS Code (scaffold built)
 
-A VS Code extension is planned to bring Relay's orchestration loop into the
-editor: start, pause, resume, and monitor long-running autonomous tasks; live
-status and progress; and one-click resume after a session limit all without
-leaving your workspace. The CLI/daemon core in this repository is the engine it
-will wrap.
+A VS Code extension in `vscode-extension/` brings Relay into the editor. Built so
+far, and confirmed end to end in the Extension Development Host: a required
+API-key gate (the key is stored in SecretStorage and validated in two stages,
+where Stage 2 runs the engine's real `claude -p` path), an engine bridge that
+drives a real multi-cycle join, and START plus STATUS views with live per-cycle
+progress. The extension wraps the engine in this repository and does not modify
+it.
+
+Not release-ready yet, and it does not pretend to be. Pause and resume are
+deferred and shown disabled, because they need a long-lived resumable engine
+entrypoint that is distinct from the current run-to-completion demo. Real
+session-limit detection is also pending, so the extension drives the proven
+injected-interrupt path rather than reacting to live quota limits.
 
 ---
 
