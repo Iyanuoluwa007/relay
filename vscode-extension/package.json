@@ -1,0 +1,90 @@
+{
+  "name": "relay-vscode",
+  "displayName": "Relay",
+  "description": "Session continuity for Claude Code: resume an interrupted task where it stopped. Drives the proven Relay engine.",
+  "version": "0.0.1",
+  "publisher": "relay",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      {
+        "command": "relay.setupKey",
+        "title": "Set Up API Key",
+        "category": "Relay"
+      },
+      {
+        "command": "relay.validateKey",
+        "title": "Validate API Key (Stage 1 + Stage 2)",
+        "category": "Relay"
+      },
+      {
+        "command": "relay.clearKey",
+        "title": "Clear API Key",
+        "category": "Relay"
+      },
+      {
+        "command": "relay.start",
+        "title": "Start Run",
+        "category": "Relay"
+      },
+      {
+        "command": "relay.showStatus",
+        "title": "Show Status",
+        "category": "Relay"
+      },
+      {
+        "command": "relay.pause",
+        "title": "Pause (not available in this scaffold)",
+        "category": "Relay"
+      },
+      {
+        "command": "relay.resume",
+        "title": "Resume (not available in this scaffold)",
+        "category": "Relay"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "relay",
+          "title": "Relay",
+          "icon": "media/relay-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "relay": [
+        {
+          "id": "relay.setupView",
+          "name": "Setup",
+          "type": "webview"
+        },
+        {
+          "id": "relay.statusView",
+          "name": "Status"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "@types/node": "^22",
+    "@types/vscode": "^1.100.0",
+    "eslint": "^9.13.0",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.26.0"
+  }
+}

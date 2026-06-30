@@ -93,9 +93,41 @@ escalate to kill-after-first-file injection); `FATAL` (auth -> 401 in transcript
    join used INJECTED limits; validate `detector.classify` against REAL `claude`
    limit-output samples (captured when a real quota limit is hit) so the
    known-strings / degradation path matches the actual wording.
+3. **A long-lived, pausable orchestrator entrypoint (prerequisite for extension
+   pause/resume).** The current `run_real_orchestrator.py` runs a self-contained
+   demo to completion and re-seeds its workbench each launch, so there is no
+   in-flight task to pause. The VS Code extension therefore ships START and
+   STATUS only; pause/resume are shown disabled. To unlock real pause/resume,
+   the engine needs an entrypoint that runs against a real ongoing task and is
+   genuinely pausable and resumable (resume continues, it does not restart from
+   the partial state). The extension's full control set depends on this.
 
 Other follow-ons: a harder real task (stress test, one variable at a time), and
 the `gitutil` consolidation below.
+
+## VS Code extension (scaffold, in `vscode-extension/`)
+
+A thin extension that drives the proven engine by subprocess; it does NOT modify
+`harness/`. Built one piece at a time, each compiling and linting clean: scaffold,
+key store (SecretStorage), two-stage key validator, engine bridge, START + STATUS
+UI. Current versions verified against the official template at build time
+(`engines.vscode ^1.100.0`, `@types/vscode`, `typescript`, eslint 9 flat config).
+
+- Required API-key gate (the extension's answer to finding #11): the user must
+  enter an `ANTHROPIC_API_KEY` and it must pass two-stage validation before any
+  run. Stage 1 is a fast `GET /v1/models` ping; Stage 2 runs the engine's real
+  headless path via `vscode-extension/scripts/preflight.py`, which imports the
+  engine's `ClaudeCodeDriver` read-only and requires `claude -p "reply OK"` to
+  return `OK`.
+- Key lives only in VS Code SecretStorage (`context.secrets`), never in
+  settings.json/globalState. The key reaches the engine via the spawn env
+  (`ANTHROPIC_API_KEY` set, `ANTHROPIC_BASE_URL`/`ANTHROPIC_AUTH_TOKEN` deleted);
+  `build_child_env` preserves the key and strips the redirect again.
+- Honest boundaries shown verbatim in the UI/docs: injected interrupts (not
+  real-limit detection), SecretStorage protects on-disk plaintext not against a
+  co-installed extension, Python discovery with a clear `[ERR]` if none found.
+- Develop: `cd vscode-extension && npm install && npm run compile && npm run
+  lint`, then open that folder in VS Code and press F5.
 
 ## Pre-flight before ANY real `--driver claude` run (REQUIRED)
 
