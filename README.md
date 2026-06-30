@@ -146,7 +146,7 @@ finish) and `duplicated` (did it respect completed work).
 > claude -p "reply OK"
 > ```
 > If this returns `OK`, you're good. If it returns a 401, your environment has a
-> redirected `ANTHROPIC_BASE_URL` or a stale credential — see HANDOVER.md for the
+> redirected `ANTHROPIC_BASE_URL` or a stale credential, see HANDOVER.md for the
 > full decision tree. (This project's driver explicitly strips non-Anthropic
 > endpoint redirects so an unattended run can't be silently pointed elsewhere.)
 
