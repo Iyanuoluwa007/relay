@@ -225,6 +225,41 @@ only by an environment auth limit outside the code.
     permissions; resume acts on our `next_action` ⇒ content), so batching them
     does not confound.
 
+11. **Relay requires an explicit `ANTHROPIC_API_KEY` (headless auth boundary).**
+    Diagnosed by elimination over multiple sessions: with `ANTHROPIC_BASE_URL`,
+    `ANTHROPIC_AUTH_TOKEN`, and `ANTHROPIC_API_KEY` all confirmed empty in a fresh
+    shell, `claude --version` and the interactive `claude` TUI authenticate fine
+    (banner: "Claude API · <org>"), but headless `claude -p "reply OK"` returns
+    `401 Invalid authentication credentials`. Conclusion: on this account the
+    interactive/login credential does NOT authorize non-interactive `-p`
+    invocations. Relay drives Claude Code exclusively through headless
+    `claude -p`, so **Relay cannot run on the interactive login alone — it
+    requires an explicit `ANTHROPIC_API_KEY`.** This is not a misconfiguration to
+    fix; it is an auth boundary of the CLI. The resolution is a deliberate
+    credential model, not a workaround:
+    - interactive Claude login for human coding sessions;
+    - a dedicated `ANTHROPIC_API_KEY` for Relay's unattended runs — explicit,
+      deliberately provisioned (via the environment / a secrets store, never
+      committed; cf. the git-ignored `.env*`), and not subject to
+      interactive-session expiry mid-run.
+
+    *Design consequence (startup assertion).* The orchestrator MUST resolve and
+    assert a single credential at startup and refuse to run without a valid
+    `ANTHROPIC_API_KEY`, logging the credential SOURCE (never the value), rather
+    than discovering the problem by 401-ing mid-cycle. The driver already strips
+    non-Anthropic endpoint redirects (`ANTHROPIC_BASE_URL` / `ANTHROPIC_AUTH_TOKEN`)
+    from the child env (finding #5) so an unattended run cannot be silently
+    pointed elsewhere; the key-presence assertion is the companion to that
+    endpoint assertion. Together they implement the rule the whole auth
+    investigation pointed at: **confirm WHERE you send requests and AS WHOM,
+    before starting, every run.**
+
+    *Note.* The orchestrator's FATAL path was observed handling a live mid-run
+    401 correctly (classified `FATAL`, stopped after one attempt, no retry/wait —
+    findings #9/#10 and `test_orchestrator.py`), so an expired or wrong key fails
+    safe. The startup assertion is the preventive complement to that graceful
+    failure, not a replacement for it.
+
 **Design consequence carried into implementation.** Because the agent cannot see
 `task_spec`, the *content* placed into a `Checkpoint` (objective, `next_action`,
 notes) must itself carry the literal, agent-visible task spec — exactly as

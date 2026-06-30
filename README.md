@@ -2,12 +2,12 @@
 
 ### Session Continuity for Claude Code
 
-> Like a relay runner handing off the baton mid-stride — the work continues
+> Like a relay runner handing off the baton mid-stride the work continues
 > across the interruption without dropping a step.
 
 **Relay** is a fault-tolerant orchestration system that lets a coding agent
 (Claude Code) **resume a long-running task exactly where it stopped** after an
-interruption — a session limit, a crash, a network drop, a reboot — instead of
+interruption a session limit, a crash, a network drop, a reboot instead of
 starting over.
 
 This repository is built around one principle: **prove the hard assumption with
@@ -22,8 +22,8 @@ the proven result.
 ## The idea
 
 Autonomous coding agents hit interruptions: usage limits reset hours later,
-sessions time out, machines reboot, connections drop. The naive recovery —
-relaunch and re-prompt — makes the agent forget where it was and redo (or undo)
+sessions time out, machines reboot, connections drop. The naive recovery
+relaunch and re-prompt makes the agent forget where it was and redo (or undo)
 completed work. A reliable continuation system must instead:
 
 1. **Detect** the interruption robustly (not by brittle exact-string matching).
@@ -35,8 +35,8 @@ completed work. A reliable continuation system must instead:
    it continue from the exact point of interruption.
 5. **Verify completion from the working tree**, never from the agent's own
    claim of success.
-6. **Stop** only on a closed set of terminal outcomes — `COMPLETED`, `FATAL`,
-   or `GAVE_UP` — so "stuck forever" and "quietly wrong" have nowhere to live.
+6. **Stop** only on a closed set of terminal outcomes `COMPLETED`, `FATAL`,
+   or `GAVE_UP` so "stuck forever" and "quietly wrong" have nowhere to live.
 
 The end goal is a near-continuous autonomous development workflow that survives
 session limits and faults with minimal human intervention, while staying
@@ -55,7 +55,7 @@ cheaply before committing to a full build. The question here:
 The spike is a **measurement harness**, not a wrapper. It runs a deterministic,
 mechanically-verifiable task, interrupts it, builds a resume prompt from the
 partial state, runs a second session with that prompt, and **scores the outcome
-objectively** — did it continue, did it re-do completed work, did it reach the
+objectively** did it continue, did it re-do completed work, did it reach the
 same end state? No LLM judges the result; the score is computed from the files
 on disk.
 
@@ -65,7 +65,7 @@ continued mid-task and respected already-completed work (`5/5` complete,
 the session transcript in which the agent explicitly recognised the
 already-done files and edited only the remaining ones.
 
-Because that result is positive, the orchestrator was built — on evidence
+Because that result is positive, the orchestrator was built on evidence
 rather than hope.
 
 ---
@@ -113,7 +113,7 @@ HANDOVER.md              # Cold-start guide for the next session
 
 ### Requirements
 
-- Python 3.11+ (standard library only — no pip install needed for the harness)
+- Python 3.11+ (standard library only no pip install needed for the harness)
 - git
 - For real runs: the Claude Code CLI (`claude`) on PATH, authenticated
 
@@ -183,9 +183,9 @@ scorer, with no duplicated work throughout.
 
 | Component | State |
 |---|---|
-| Resume-fidelity spike | **Positive** — resume continues, verified mechanically and by transcript |
+| Resume-fidelity spike | **Positive** resume continues, verified mechanically and by transcript |
 | Orchestrator (thinnest vertical slice) | **Built and green** against deterministic fakes |
-| Real-CLI orchestrator run | Next milestone — joining the proven loop to a live multi-cycle run |
+| Real-CLI orchestrator run | Next milestone joining the proven loop to a live multi-cycle run |
 
 The thinnest vertical slice from the design is complete: detect one interruption
 type, checkpoint, wait, relaunch, resume, drive to completion, on one project,
@@ -197,20 +197,20 @@ bolts onto this loop without changing its control flow.
 
 ## Roadmap
 
-- **Real-CLI orchestrator run** — live session-limit detection, real reset-time
+- **Real-CLI orchestrator run** live session-limit detection, real reset-time
   parsing, multi-cycle git state against the actual CLI.
-- **Additional interruption types** — context-window-full, network drop, each a
+- **Additional interruption types** context-window-full, network drop, each a
   new detector row routing through the existing recovery path.
-- **Notifications** — desktop, then one webhook (paused, resumed, completed,
+- **Notifications** desktop, then one webhook (paused, resumed, completed,
   unrecoverable).
-- **Work queue** — multiple projects with optional task-switching while one
+- **Work queue** multiple projects with optional task-switching while one
   waits for reset.
 
-### Relay for VS Code — coming soon
+### Relay for VS Code coming soon
 
 A VS Code extension is planned to bring Relay's orchestration loop into the
 editor: start, pause, resume, and monitor long-running autonomous tasks; live
-status and progress; and one-click resume after a session limit — all without
+status and progress; and one-click resume after a session limit all without
 leaving your workspace. The CLI/daemon core in this repository is the engine it
 will wrap.
 
@@ -219,12 +219,12 @@ will wrap.
 ## A note on methodology
 
 Relay is as much about *how* it was built as what it builds. It began as a
-**resume-fidelity spike** — a throwaway-quality experiment to measure the one
+**resume-fidelity spike** a throwaway-quality experiment to measure the one
 load-bearing assumption before building anything on it. That spike caught a long
-series of real defects on a five-file toy task — Windows
+series of real defects on a five-file toy task Windows
 executable resolution, swallowed error output, false-green scoring, a confounded
 task prompt, an endpoint redirect, a stale credential, a folder-trust gate, a
-UTF-8 decode crash, headless permission gating, and weak resume instructions —
+UTF-8 decode crash, headless permission gating, and weak resume instructions
 each of which would have been a silent, load-bearing failure in an unattended
 orchestrator running for days. `DESIGN.md` records each as a numbered finding.
 Finding them early, on something cheap, is the entire reason the spike exists.

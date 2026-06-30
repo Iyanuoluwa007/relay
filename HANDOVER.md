@@ -1,7 +1,7 @@
 # HANDOVER
 
-Last updated: 2026-06-29. Read this first; it gets a new session productive in
-~30 seconds instead of re-deriving 13 turns of context.
+Last updated: 2026-06-30. Read this first; it gets a new session productive in
+~30 seconds instead of re-deriving the context.
 
 ## Where things stand
 
@@ -29,25 +29,78 @@ the real `scorer.py`, `is_doubled` clean), FATAL short-circuit, GAVE_UP at the
 attempt cap, UNKNOWN recovery, false-done-token rejection (tree-truth), and no
 real sleeping.
 
-## THE NEXT MILESTONE (do this first, in a fresh session)
+## MILESTONE DONE — real-CLI multi-cycle JOIN PROVEN
 
-**Join the proven loop logic to the real `ClaudeCodeDriver`** — a real-CLI
-orchestrator run against a real interrupted task across real cycles. The fakes
-prove control flow; the spike proved real-CLI resume; those two have NOT been
-joined yet. The join will surface real-CLI behavior the fakes can't:
+The join (orchestrator loop driving the REAL Claude Code CLI across cycles) is
+implemented in `harness/run_real_orchestrator.py` and PROVEN green on the real
+CLI: `--driver claude --interrupts 2` ran 3 real `claude -p` sessions, done-count
+climbed `[3, 4, 5]`, `duplicated=none`, `[OK] JOIN PROVEN (multi-cycle)`, exit 0.
+The orchestrator re-checkpointed from real accumulated git state and resumed a
+fresh real session each cycle. `orchestrator.py` was NOT modified — the injection
+lives in a driver wrapper stack:
+`InjectedInterruptDriver( TranscriptPersistingDriver( ClaudeCodeDriver ) )`.
 
-- real session-limit detection on live `claude` output (the detector's known
-  strings / degradation path against actual wording),
-- real reset-time parsing feeding the waiter,
-- multi-cycle git checkpoint state across genuine relaunches.
+Interruptions are INJECTED (a synthetic SESSION_LIMIT after real partial work),
+because we can't summon a real quota reset on demand — same partial-then-kill
+mechanism the spike used. (Live session-limit DETECTION against real quota output
+is the additive follow-on, below.)
 
-`run_until_done` already accepts a driver; pass a real `ClaudeCodeDriver` instead
-of a fake. The wiring pattern is in `test_orchestrator.py::_run`.
+Re-run any time (after the pre-flight below: `claude -p "reply OK"`, clean
+endpoint, trusted folder, valid `ANTHROPIC_API_KEY` — finding #11):
+
+```
+python harness/run_real_orchestrator.py --driver claude --interrupts 2  # the real join
+python harness/run_real_orchestrator.py --driver fake   --interrupts 2  # wiring, no CLI
+python harness/run_real_orchestrator.py --driver greedy --interrupts 2  # must FAIL, exit 1
+```
+
+**Multi-cycle is ENFORCED.** Injected cycles REPLACE the prompt with a tight
+single-file command (`_single_file_prompt`: names one file, forbids the others,
+"do NOT continue") so the real session edits exactly one file and the orchestrator
+must re-checkpoint and run another real session. With `--interrupts 2` there must
+be exactly 3 real sessions and the done-count must climb `3 -> 4 -> 5`. The run
+ASSERTS this (`real sessions=N (expected M)`, `per-cycle done-count=[...]`); a
+finish-too-early run prints `MULTI-CYCLE NOT EXERCISED` and exits 1 -- it can no
+longer falsely report a proven join. (Proven by the `greedy` negative control:
+`python harness/run_real_orchestrator.py --driver greedy` finishes in one session
+and FAILS loudly, exit 1.)
+
+Healthy per cycle: `injected interruption after cycle N: K/5 done (inner rc=0)`
+with K climbing one per cycle; the cycle transcript shows the single-file prompt
+and real edits with substantial `stdout chars` (NOT "queued pending your
+permission grant"); `event=SESSION_LIMIT`. Headline success:
+`real sessions=3 (expected 3)`, `done-count=[3, 4, 5]`,
+`[RESULT] ... (5/5 done) ... duplicated=none lost=none`, `[OK] JOIN PROVEN
+(multi-cycle)`, exit 0. Unhealthy: `0 stdout chars` / "queued"
+(permission/trust -> flip to `ACCEPT_EDITS_WITH_TOOLS`); `MULTI-CYCLE NOT
+EXERCISED` with `sessions=1` (the tight prompt still didn't constrain claude ->
+escalate to kill-after-first-file injection); `FATAL` (auth -> 401 in transcript);
+`duplicated=` non-empty (resume re-did work). Read
+`results/claude_real_orch_cycle{1,2,3}_session.txt` for any unhealthy cycle.
+
+## THE NEXT MILESTONE (fresh session)
+
+1. **Startup credential assertion (finding #11 implementation).** Relay requires
+   an explicit `ANTHROPIC_API_KEY` because the interactive login does not
+   authorize headless `claude -p` (DESIGN.md finding #11). Implement the
+   companion to the endpoint assertion: at startup, resolve a single credential,
+   assert a valid `ANTHROPIC_API_KEY` is present, log its SOURCE (never the
+   value), and refuse to run otherwise — so a missing/expired key fails BEFORE a
+   cycle, not by 401-ing mid-run. Small, well-specified: driver/entrypoint + one
+   test, same one-module discipline. (The orchestrator's FATAL path already
+   handles a live mid-run 401 gracefully; this is the preventive complement.)
+2. **Live session-limit DETECTION against real quota output (additive).** The
+   join used INJECTED limits; validate `detector.classify` against REAL `claude`
+   limit-output samples (captured when a real quota limit is hit) so the
+   known-strings / degradation path matches the actual wording.
+
+Other follow-ons: a harder real task (stress test, one variable at a time), and
+the `gitutil` consolidation below.
 
 ## Pre-flight before ANY real `--driver claude` run (REQUIRED)
 
 The auth/redirect setup is the thing that cost the most time; get it right up
-front. Root cause history is in `DESIGN.md` findings #1–#10.
+front. Root cause history is in `DESIGN.md` findings #1–#11.
 
 1. **Endpoint must be clean.** A shell profile here exports
    `ANTHROPIC_BASE_URL=http://localhost:11434` + `ANTHROPIC_AUTH_TOKEN=ollama`
